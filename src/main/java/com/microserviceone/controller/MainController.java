@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/microservice-one")
+@RequestMapping("/ms-reserva")
 public class MainController {
 
     @Autowired
@@ -22,8 +22,13 @@ public class MainController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Reserva> createReserva(@RequestBody ReservaRequest reserva) {
+    public ResponseEntity<Object> createReserva(@RequestBody ReservaRequest reserva) {
         return reservaService.createReserva(reserva);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deletarReserva(@PathVariable("id") Long id) {
+        return reservaService.deletarReserva(id);
     }
 
 }

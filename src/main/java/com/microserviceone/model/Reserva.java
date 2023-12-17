@@ -1,7 +1,6 @@
 package com.microserviceone.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +8,8 @@ import java.time.LocalDateTime;
 public class Reserva {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mi_secuencia_generator")
+    @SequenceGenerator(name = "mi_secuencia_generator", sequenceName = "mi_secuencia", allocationSize = 1)
     private Long id;
     private Long restauranteId;
     private LocalDateTime dataHora;

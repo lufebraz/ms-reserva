@@ -1,10 +1,9 @@
 package com.microserviceone.service;
 
-import com.microserviceone.model.Reserva;
-import com.microserviceone.model.ReservaRequest;
-import com.microserviceone.model.RestauranteRequest;
-import com.microserviceone.model.RestauranteResponse;
+import com.microserviceone.model.*;
 import com.microserviceone.repository.ReservaRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -12,39 +11,70 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ReservaService {
 
     @Autowired
     private ReservaRepository reservaRepository;
-    RestTemplate restTemplate;
+
+    private RestTemplate restTemplate;
+    private void init() {
+        if (restTemplate == null) {
+            this.restTemplate = new RestTemplate();
+        }
+    }
+    private String BASE_URL = "http://localhost:8081/ms-restaurante";
+
 
     public List<Reserva> findReservas() {
         return reservaRepository.findAll();
     }
 
-    public ResponseEntity<Object> createReserva(ReservaRequest reserva) {
-        if( reserva.getNomeRestaurante() != null ) {
-            RestauranteRequest restauranteRequest = new RestauranteRequest();
+    @CircuitBreaker(name = "myCircuitBreaker", fallbackMethod = "fallbackMethod")
+    public ResponseEntity<Object> createReserva(ReservaRequest request) {
 
-            restauranteRequest.setNomeRestaurante(reserva.getNomeRestaurante());
+        RestauranteRequest restauranteRequest = new RestauranteRequest();
+        restauranteRequest.setNomeRestaurante(request.getNomeRestaurante());
+        init();
+        ResponseEntity<Restaurante> forEntity = restTemplate.postForEntity(BASE_URL + "/find-by-name", restauranteRequest, Restaurante.class);
 
-            String url = "localhost:8081/restaurante/checkar-reserva";
-            ResponseEntity<RestauranteResponse> forEntity = restTemplate.postForEntity(url, restauranteRequest, RestauranteResponse.class);
+        if (forEntity.getStatusCode().value() == 200) {
+            Reserva reserva = new Reserva();
 
-            if (forEntity.getStatusCode().value() == 200) {
-                Reserva reserva1 = new Reserva();
-                reserva1.setRestauranteId(forEntity.getBody().getRestauranteId());
-                reservaRepository.save(reserva);
-                return ResponseEntity.ok(reserva);
+            reserva.setNomeCliente(request.getNomeCliente());
+            reserva.setContatoCliente(request.getContatoCliente());
+            reserva.setDataHora(request.getDataHora());
+            reserva.setNumeroDePessoas(request.getNumeroPessoas());
+            reserva.setRestauranteId(forEntity.getBody().getId());
 
-            } else {
-                ResponseEntity.badRequest();
-            }
+            Reserva savedReserva = reservaRepository.save(reserva);
+
+            ReservaResponse reservaResponse = new ReservaResponse();
+            BeanUtils.copyProperties(savedReserva, reservaResponse);
+            reservaResponse.setNomeRestaurante(forEntity.getBody().getNomeRestaurante());
+            reservaResponse.setDataHora(reserva.getDataHora().toString());
+
+            return ResponseEntity.ok(reservaResponse);
 
         } else {
-            return ResponseEntity.badRequest().body("Faltou o nome do Restaurante");
+           return ResponseEntity.badRequest().body("Restaurante não localizado.");
         }
+    }
+
+
+    public ResponseEntity<Object> deletarReserva(Long id) {
+        Optional<Reserva> reservaOpt = reservaRepository.findById(id);
+        if (reservaOpt.isPresent()) {
+            reservaRepository.deleteById(id);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    public ResponseEntity<String> fallbackMethod() {
+        return ResponseEntity.internalServerError().body("Servico fora do ar");
     }
 }

@@ -1,17 +1,20 @@
 package com.microserviceone.model;
 
-import org.springframework.lang.NonNull;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-public class ReservaRequest {
+public class ReservaResponse {
+    private Long id;
     private String nomeCliente;
     private String contatoCliente;
-    private LocalDateTime dataHora;
-    private Integer numeroPessoas;
-    @NonNull
+    private Integer numeroDePessoas;
     private String nomeRestaurante;
+    private String dataHora;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getNomeCliente() {
         return nomeCliente;
@@ -29,20 +32,12 @@ public class ReservaRequest {
         this.contatoCliente = contatoCliente;
     }
 
-    public LocalDateTime getDataHora() {
-        return dataHora;
+    public Integer getNumeroDePessoas() {
+        return numeroDePessoas;
     }
 
-    public void setDataHora(LocalDateTime dataHora) {
-        this.dataHora = dataHora;
-    }
-
-    public Integer getNumeroPessoas() {
-        return numeroPessoas;
-    }
-
-    public void setNumeroPessoas(Integer numeroPessoas) {
-        this.numeroPessoas = numeroPessoas;
+    public void setNumeroDePessoas(Integer numeroDePessoas) {
+        this.numeroDePessoas = numeroDePessoas;
     }
 
     public String getNomeRestaurante() {
@@ -51,5 +46,13 @@ public class ReservaRequest {
 
     public void setNomeRestaurante(String nomeRestaurante) {
         this.nomeRestaurante = nomeRestaurante;
+    }
+
+    public String getDataHora() {
+        return dataHora;
+    }
+
+    public void setDataHora(String dataHora) {
+        this.dataHora = dataHora;
     }
 }
